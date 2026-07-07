@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KINO INSAYDER</title>
+    
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456"
+     crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header>
+        <h1>KINO INSAYDER</h1>
+        <p>Eng zo'r kino treylerlari to'plami</p>
+    </header>
+
+    <div class="movie-grid">
+        
+        <div class="movie-card">
+            <img src="{{ url_for('static', filename='images/spiderman.jpg') }}" alt="O'rgimchak odam">
+            <h3>O'RGIMCHAK ODAM: YANGI KUN</h3>
+            <button class="watch-btn" data-video="{{ url_for('static', filename='videos/spiderman.mp4') }}">Treylerni ko'rish</button>
+        </div>
+
+    </div>
+
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <video id="videoPlayer" controls width="100%"></video>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('videoModal');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const closeBtn = document.querySelector('.close-btn');
+        const buttons = document.querySelectorAll('.watch-btn');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const videoUrl = this.getAttribute('data-video');
+                videoPlayer.src = videoUrl; 
+                modal.style.display = 'flex'; 
+            });
+        });
+
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none'; 
+            videoPlayer.pause(); 
+            videoPlayer.src = ''; 
+        });
+
+        window.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+                videoPlayer.pause();
+                videoPlayer.src = '';
+            }
+        });
+    </script>
+</body>
+</html>

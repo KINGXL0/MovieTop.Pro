@@ -1,0 +1,114 @@
+/* Основные стили страницы */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #111;
+    color: #fff;
+    margin: 0;
+    padding: 20px 0; /* Убрали боковые отступы для правильного выравнивания */
+    text-align: center;
+}
+
+header {
+    margin-bottom: 30px;
+}
+
+h1 {
+    color: #e50914;
+    font-size: 2.5rem;
+}
+
+/* Контейнер для карточек (выровнен по центру и смещен влево) */
+.movie-grid {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto; /* Центрирует сетку на экране */
+}
+
+/* Стили карточки фильма */
+.movie-card {
+    background-color: #222;
+    padding: 15px;
+    border-radius: 10px;
+    width: 220px;
+    height: 440px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+}
+
+/* Стили постера внутри карточки */
+.movie-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+/* Стили красной кнопки */
+.watch-btn {
+    display: inline-block;
+    margin-top: auto;
+    padding: 10px 18px;
+    background-color: #e50914;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.watch-btn:hover {
+    background-color: #b80710;
+}
+
+/* --- Стили для Всплывающего Модального Окна --- */
+.modal {
+    display: none; /* По умолчанию скрыто */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9); /* Полупрозрачный черный фон */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Контейнер для плеера */
+.modal-content {
+    position: relative;
+    width: 80%;
+    max-width: 800px;
+}
+
+/* Сам элемент видео */
+.modal-content video {
+    width: 100%;
+    max-height: 500px;
+    border-radius: 8px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    outline: none;
+}
+
+/* Кнопка закрытия (Крестик) */
+.close-btn {
+    position: absolute;
+    top: -45px;
+    right: 0;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #e50914;
+}

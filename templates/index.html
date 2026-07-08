@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MovieTop.Pro — treylerlar zali</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-video-base="{{ url_for('static', filename='videos/') }}">
+
+  <header class="marquee">
+    <div class="bulbs" aria-hidden="true"></div>
+    <div class="marquee__inner">
+      <p class="eyebrow">Hozir zalda</p>
+      <h1 class="marquee__title"><span class="marquee__black">MOVIETOP</span><span class="marquee__dot">.</span><span class="marquee__red">PRO</span></h1>
+      <p class="marquee__sub">Eng so'nggi treylerlarni birinchilardan bo'lib tomosha qiling</p>
+    </div>
+    <div class="bulbs bulbs--bottom" aria-hidden="true"></div>
+  </header>
+
+  <div class="reel" aria-hidden="true"></div>
+
+  <main class="hall">
+    <div class="hall__toolbar">
+      <input
+        id="search"
+        class="search"
+        type="text"
+        placeholder="Kino nomini qidiring..."
+        autocomplete="off"
+        aria-label="Kino nomini qidirish"
+      >
+      <div class="filters" id="filters" role="group" aria-label="Janr bo'yicha filtr">
+        <button class="filter active" data-genre="all">Barchasi</button>
+        {% for g in movies|map(attribute='genre')|unique %}
+        <button class="filter" data-genre="{{ g }}">{{ g }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <section class="grid" id="grid">
+      {% for movie in movies %}
+      <article class="ticket" data-title="{{ movie.title|lower }}" data-genre="{{ movie.genre }}">
+        <div
+          class="ticket__poster"
+          {% if movie.video %}data-video="{{ url_for('static', filename='videos/' ~ movie.video) }}"{% endif %}
+        >
+          <img
+            class="ticket__poster-img"
+            src="{{ url_for('static', filename='images/' ~ movie.image) }}"
+            alt="{{ movie.title }} plakati"
+            loading="lazy"
+            onerror="this.parentElement.classList.add('ticket__poster--fallback'); this.remove();"
+          >
+          <span class="ticket__rating" title="Reyting">★ {{ movie.rating }}</span>
+          {% if movie.video %}<span class="ticket__preview-badge">Oldindan ko'rish</span>{% endif %}
+        </div>
+        <div class="ticket__stub" aria-hidden="true"></div>
+        <div class="ticket__body">
+          <p class="ticket__meta">{{ movie.genre }} · {{ movie.year }}</p>
+          <h2 class="ticket__title">{{ movie.title }}</h2>
+          <p class="ticket__desc">{{ movie.description }}</p>
+          <button
+            class="ticket__play"
+            data-trailer="{{ movie.trailer_url }}"
+            data-title="{{ movie.title }}"
+            {% if movie.video and not movie.episodes %}data-local="{{ url_for('static', filename='videos/' ~ movie.video) }}"{% endif %}
+            {% if movie.episodes %}data-episodes='{{ movie.episodes|tojson }}'{% endif %}
+          >
+            ▶ Kino ko'rish
+          </button>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+
+    <p class="empty" id="empty" hidden>Bunday nomdagi kino topilmadi.</p>
+  </main>
+
+  <footer class="foot">
+    <p>MovieTop.Pro — barcha huquqlar himoyalangan</p>
+  </footer>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal__close" data-close aria-label="Yopish">✕</button>
+      <p class="modal__title" id="modal-title"></p>
+      <div class="modal__episodes" id="modal-episodes" hidden></div>
+      <div class="modal__frame">
+        <video
+          id="modal-video"
+          controls
+          playsinline
+          hidden
+        ></video>
+        <iframe
+          id="modal-iframe"
+          src=""
+          title="Video"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Video oldindan ko'rish (hover preview) ---
+    document.querySelectorAll('.ticket__poster[data-video]').forEach(poster => {
+      let video = null;
+
+      poster.addEventListener('mouseenter', () => {
+        if (!video) {
+          video = document.createElement('video');
+          video.className = 'ticket__poster-video';
+          video.src = poster.dataset.video;
+          video.muted = true;
+          video.loop = true;
+          video.playsInline = true;
+          poster.appendChild(video);
+        }
+        video.currentTime = 0;
+        video.play().catch(() => {});
+        poster.classList.add('ticket__poster--playing');
+      });
+
+      poster.addEventListener('mouseleave', () => {
+        if (video) {
+          video.pause();
+        }
+        poster.classList.remove('ticket__poster--playing');
+      });
+    });
+
+    // --- Qidiruv va janr filtri ---
+    const searchInput = document.getElementById('search');
+    const filterButtons = document.querySelectorAll('.filter');
+    const cards = Array.from(document.querySelectorAll('.ticket'));
+    const empty = document.getElementById('empty');
+    let activeGenre = 'all';
+
+    function applyFilters() {
+      const q = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+      cards.forEach(card => {
+        const matchesText = card.dataset.title.includes(q);
+        const matchesGenre = activeGenre === 'all' || card.dataset.genre === activeGenre;
+        const show = matchesText && matchesGenre;
+        card.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+      empty.hidden = visibleCount !== 0;
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeGenre = btn.dataset.genre;
+        applyFilters();
+      });
+    });
+
+    // --- Treyler / kino modal oynasi ---
+    const modal = document.getElementById('modal');
+    const modalIframe = document.getElementById('modal-iframe');
+    const modalVideo = document.getElementById('modal-video');
+    const modalTitle = document.getElementById('modal-title');
+    const modalEpisodes = document.getElementById('modal-episodes');
+    const videoBase = document.body.dataset.videoBase;
+
+    modalVideo.addEventListener('error', () => {
+      console.error('Video fayl topilmadi yoki yuklanmadi:', modalVideo.src);
+    });
+
+    function playLocal(url) {
+      modalIframe.src = '';
+      modalIframe.hidden = true;
+      modalVideo.hidden = false;
+      modalVideo.src = url;
+      modalVideo.load();
+      const playPromise = modalVideo.play();
+      if (playPromise) {
+        playPromise.catch(err => console.error('Video ijro etilmadi:', err, url));
+      }
+    }
+
+    function playYoutube(url) {
+      modalVideo.pause();
+      modalVideo.src = '';
+      modalVideo.hidden = true;
+      modalIframe.hidden = false;
+      const sep = url.includes('?') ? '&' : '?';
+      modalIframe.src = `${url}${sep}autoplay=1&rel=0`;
+    }
+
+    function playEpisode(ep) {
+      if (ep.file) {
+        playLocal(videoBase + ep.file);
+      } else if (ep.url) {
+        playYoutube(ep.url);
+      }
+    }
+
+    function renderEpisodes(episodes, title) {
+      modalEpisodes.innerHTML = '';
+      modalEpisodes.hidden = false;
+      episodes.forEach((ep, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'episode-chip' + (i === 0 ? ' active' : '');
+        btn.textContent = ep.title || `${ep.number}-qism`;
+        btn.addEventListener('click', () => {
+          modalEpisodes.querySelectorAll('.episode-chip').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          modalTitle.textContent = `${title} — ${btn.textContent}`;
+          playEpisode(ep);
+        });
+        modalEpisodes.appendChild(btn);
+      });
+    }
+
+    document.querySelectorAll('.ticket__play').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const title = btn.dataset.title;
+        modal.hidden = false;
+        document.body.style.overflow = 'hidden';
+
+        if (btn.dataset.episodes) {
+          const episodes = JSON.parse(btn.dataset.episodes);
+          renderEpisodes(episodes, title);
+          modalTitle.textContent = `${title} — ${episodes[0].title || '1-qism'}`;
+          playEpisode(episodes[0]);
+        } else if (btn.dataset.local) {
+          modalEpisodes.hidden = true;
+          modalEpisodes.innerHTML = '';
+          modalTitle.textContent = title;
+          playLocal(btn.dataset.local);
+        } else {
+          modalEpisodes.hidden = true;
+          modalEpisodes.innerHTML = '';
+          modalTitle.textContent = title;
+          playYoutube(btn.dataset.trailer);
+        }
+      });
+    });
+
+    function closeModal() {
+      modal.hidden = true;
+      modalIframe.src = '';
+      modalVideo.pause();
+      modalVideo.src = '';
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+  </script>
+</body>
+</html>
